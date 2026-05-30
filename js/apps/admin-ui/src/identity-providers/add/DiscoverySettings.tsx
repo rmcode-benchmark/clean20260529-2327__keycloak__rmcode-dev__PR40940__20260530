@@ -71,12 +71,6 @@ const Fields = ({ readOnly, isOIDC }: DiscoverySettingsProps) => {
           required: isOIDC ? "" : t("required"),
         }}
       />
-      <TextControl
-        name="config.tokenIntrospectionUrl"
-        label={t("tokenIntrospectionUrl")}
-        type="url"
-        readOnly={readOnly}
-      />
       {isOIDC && (
         <TextControl
           name="config.issuer"

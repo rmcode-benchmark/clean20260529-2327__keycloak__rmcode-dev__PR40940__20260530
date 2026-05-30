@@ -86,7 +86,7 @@ public class KeycloakTestingClient implements AutoCloseable {
 
     public void enableFeature(Profile.Feature feature) {
         String featureString;
-        if (shouldUseVersionedKey(feature)) {
+        if (Profile.getFeatureVersions(feature.getUnversionedKey()).size() > 1) {
             featureString = feature.getVersionedKey();
         } else {
             featureString = feature.getKey();
@@ -96,13 +96,9 @@ public class KeycloakTestingClient implements AutoCloseable {
         ProfileAssume.updateDisabledFeatures(disabledFeatures);
     }
 
-    private boolean shouldUseVersionedKey(Profile.Feature feature) {
-        return ((Profile.getFeatureVersions(feature.getUnversionedKey()).size() > 1) || (feature.getVersion() != 1));
-    }
-
     public void disableFeature(Profile.Feature feature) {
         String featureString;
-        if (shouldUseVersionedKey(feature)) {
+        if (Profile.getFeatureVersions(feature.getUnversionedKey()).size() > 1) {
             featureString = feature.getVersionedKey();
         } else {
             featureString = feature.getKey();
@@ -119,7 +115,7 @@ public class KeycloakTestingClient implements AutoCloseable {
      */
     public void resetFeature(Profile.Feature feature) {
         String featureString;
-        if (shouldUseVersionedKey(feature)) {
+        if (Profile.getFeatureVersions(feature.getUnversionedKey()).size() > 1) {
             featureString = feature.getVersionedKey();
             Profile.Feature featureVersionHighestPriority = Profile.getFeatureVersions(feature.getUnversionedKey()).iterator().next();
             if (featureVersionHighestPriority.getType().equals(Profile.Feature.Type.DEFAULT)) {

@@ -1,8 +1,5 @@
 package org.keycloak.quarkus.runtime.configuration.mappers;
 
-import static org.keycloak.quarkus.runtime.configuration.Configuration.getOptionalKcValue;
-import static org.keycloak.quarkus.runtime.configuration.mappers.PropertyMapper.fromOption;
-
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -11,6 +8,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.BooleanSupplier;
 
+import com.google.common.base.CaseFormat;
+import io.smallrye.config.ConfigSourceInterceptorContext;
 import org.keycloak.common.Profile;
 import org.keycloak.config.CachingOptions;
 import org.keycloak.config.Option;
@@ -20,9 +19,8 @@ import org.keycloak.quarkus.runtime.cli.PropertyException;
 import org.keycloak.quarkus.runtime.configuration.Configuration;
 import org.keycloak.utils.StringUtil;
 
-import com.google.common.base.CaseFormat;
-
-import io.smallrye.config.ConfigSourceInterceptorContext;
+import static org.keycloak.quarkus.runtime.configuration.Configuration.getOptionalKcValue;
+import static org.keycloak.quarkus.runtime.configuration.mappers.PropertyMapper.fromOption;
 
 final class CachingPropertyMappers {
 
@@ -100,26 +98,6 @@ final class CachingPropertyMappers {
                         .isEnabled(() -> Configuration.isTrue(CachingOptions.CACHE_EMBEDDED_MTLS_ENABLED), "property '%s' is enabled".formatted(CachingOptions.CACHE_EMBEDDED_MTLS_ENABLED.getKey()))
                         .validator(CachingPropertyMappers::validateCertificateRotationIsPositive)
                         .build(),
-                fromOption(CachingOptions.CACHE_EMBEDDED_NETWORK_BIND_ADDRESS)
-                        .paramLabel("address")
-                        .to("kc.spi-cache-embedded--default--network-bind-address")
-                        .isEnabled(CachingPropertyMappers::cacheSetToInfinispan, "Infinispan clustered embedded is enabled")
-                        .build(),
-                fromOption(CachingOptions.CACHE_EMBEDDED_NETWORK_BIND_PORT)
-                       .paramLabel("port")
-                       .to("kc.spi-cache-embedded--default--network-bind-port")
-                       .isEnabled(CachingPropertyMappers::cacheSetToInfinispan, "Infinispan clustered embedded is enabled")
-                       .build(),
-                fromOption(CachingOptions.CACHE_EMBEDDED_NETWORK_EXTERNAL_ADDRESS)
-                       .paramLabel("address")
-                       .to("kc.spi-cache-embedded--default--network-external-address")
-                       .isEnabled(CachingPropertyMappers::cacheSetToInfinispan, "Infinispan clustered embedded is enabled")
-                       .build(),
-                fromOption(CachingOptions.CACHE_EMBEDDED_NETWORK_EXTERNAL_PORT)
-                       .paramLabel("port")
-                       .isEnabled(CachingPropertyMappers::cacheSetToInfinispan, "Infinispan clustered embedded is enabled")
-                       .to("kc.spi-cache-embedded--default--network-external-port")
-                       .build(),
                 fromOption(CachingOptions.CACHE_REMOTE_HOST)
                         .paramLabel("hostname")
                         .to("kc.spi-cache-remote--default--hostname")

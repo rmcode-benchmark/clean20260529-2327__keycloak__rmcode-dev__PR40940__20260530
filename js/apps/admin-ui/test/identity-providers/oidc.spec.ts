@@ -1,7 +1,7 @@
 import { test } from "@playwright/test";
 import { v4 as uuid } from "uuid";
 import adminClient from "../utils/AdminClient";
-import { switchOn } from "../utils/form";
+import { switchOff, switchOn } from "../utils/form";
 import { login } from "../utils/login";
 import { assertNotificationMessage } from "../utils/masthead";
 import { goToIdentityProviders } from "../utils/sidebar";
@@ -53,13 +53,8 @@ test.describe("OIDC identity provider test", () => {
     await assertInvalidUrlNotification(page, "token");
     await clickRevertButton(page);
 
-    await setUrl(page, "tokenIntrospection", "invalid");
-    await clickSaveButton(page);
-    await assertInvalidUrlNotification(page, "tokenIntrospection");
-    await clickRevertButton(page);
-
     await assertJwksUrlExists(page);
-    await page.getByText("Use JWKS URL").click();
+    await switchOff(page, "#config\\.useJwksUrl");
     await assertJwksUrlExists(page, false);
 
     await assertPkceMethodExists(page, false);

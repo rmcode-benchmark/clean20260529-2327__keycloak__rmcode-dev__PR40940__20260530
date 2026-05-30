@@ -19,21 +19,17 @@ package org.keycloak.testframework.server;
 
 import java.util.Arrays;
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
-import org.infinispan.server.test.core.CountdownLatchLoggingConsumer;
 import org.jboss.logging.Logger;
 import org.keycloak.it.utils.DockerKeycloakDistribution;
 import org.keycloak.testframework.clustering.LoadBalancer;
-import org.keycloak.testframework.logging.JBossLogConsumer;
+import org.keycloak.testframework.database.JBossLogConsumer;
 import org.testcontainers.images.RemoteDockerImage;
 import org.testcontainers.utility.DockerImageName;
 import org.testcontainers.utility.LazyFuture;
 
 public class ClusteredKeycloakServer implements KeycloakServer {
 
-    private static final String CLUSTER_VIEW_REGEX = ".*ISPN000093.*(?<=\\()(%1$d)(?=\\)).*|.*ISPN000094.*(?<=\\()(%1$d)(?=\\)).*";
     private static final boolean MANUAL_STOP = true;
     private static final int REQUEST_PORT = 8080;
     private static final int MANAGEMENT_PORT = 9000;
@@ -53,26 +49,15 @@ public class ClusteredKeycloakServer implements KeycloakServer {
 
     @Override
     public void start(KeycloakServerConfigBuilder configBuilder) {
-        int numServers = containers.length;
-        CountdownLatchLoggingConsumer clusterLatch = new CountdownLatchLoggingConsumer(numServers, String.format(CLUSTER_VIEW_REGEX, numServers));
         String[] imagePeServer = null;
         if (images == null || images.isEmpty() || (imagePeServer = images.split(",")).length == 1) {
-            startContainersWithSameImage(configBuilder, imagePeServer == null ? SNAPSHOT_IMAGE : imagePeServer[0], clusterLatch);
+            startContainersWithSameImage(configBuilder, imagePeServer == null ? SNAPSHOT_IMAGE : imagePeServer[0]);
         } else {
-            startContainersWithMixedImage(configBuilder, imagePeServer, clusterLatch);
-        }
-
-        try {
-            clusterLatch.await((long) numServers * DockerKeycloakDistribution.STARTUP_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException(e);
-        } catch (TimeoutException e) {
-            throw new RuntimeException("Expected %d cluster members".formatted(numServers), e);
+            startContainersWithMixedImage(configBuilder, imagePeServer);
         }
     }
 
-    private void startContainersWithMixedImage(KeycloakServerConfigBuilder configBuilder, String[] imagePeServer, CountdownLatchLoggingConsumer clusterLatch) {
+    private void startContainersWithMixedImage(KeycloakServerConfigBuilder configBuilder, String[] imagePeServer) {
         assert imagePeServer != null;
         if (containers.length != imagePeServer.length) {
             throw new IllegalArgumentException("The number of containers and the number of images must match");
@@ -94,12 +79,12 @@ public class ClusteredKeycloakServer implements KeycloakServer {
 
             copyProvidersAndConfigs(container, configBuilder);
 
-            configureLogConsumers(container, i, clusterLatch);
+            container.setCustomLogConsumer(new JBossLogConsumer(Logger.getLogger("managed.keycloak." + i)));
             container.run(configBuilder.toArgs());
         }
     }
 
-    private void startContainersWithSameImage(KeycloakServerConfigBuilder configBuilder, String image, CountdownLatchLoggingConsumer clusterLatch) {
+    private void startContainersWithSameImage(KeycloakServerConfigBuilder configBuilder, String image) {
         int[] exposedPorts = new int[]{REQUEST_PORT, MANAGEMENT_PORT};
         LazyFuture<String> imageFuture = image == null || SNAPSHOT_IMAGE.equals(image) ?
                 defaultImage() :
@@ -109,14 +94,10 @@ public class ClusteredKeycloakServer implements KeycloakServer {
             containers[i] = container;
 
             copyProvidersAndConfigs(container, configBuilder);
-            configureLogConsumers(container, i, clusterLatch);
+
+            container.setCustomLogConsumer(new JBossLogConsumer(Logger.getLogger("managed.keycloak." + i)));
             container.run(configBuilder.toArgs());
         }
-    }
-
-    private static void configureLogConsumers(DockerKeycloakDistribution container, int index, CountdownLatchLoggingConsumer clusterLatch) {
-        var logger = new JBossLogConsumer(Logger.getLogger("managed.keycloak." + index));
-        container.setCustomLogConsumer(logger.andThen(clusterLatch));
     }
 
     private void copyProvidersAndConfigs(DockerKeycloakDistribution container, KeycloakServerConfigBuilder configBuilder) {

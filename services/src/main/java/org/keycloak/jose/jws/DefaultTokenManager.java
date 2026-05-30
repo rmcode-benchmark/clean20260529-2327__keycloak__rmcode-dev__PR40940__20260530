@@ -244,7 +244,7 @@ public class DefaultTokenManager implements TokenManager {
         switch (category) {
             case ACCESS:
                 ClientModel client = session.getContext().getClient();
-                return client != null && OIDCAdvancedConfigWrapper.fromClientModel(client).isUseRfc9068AccessTokenHeaderType()
+                return OIDCAdvancedConfigWrapper.fromClientModel(client).isUseRfc9068AccessTokenHeaderType()
                     ? TokenUtil.TOKEN_TYPE_JWT_ACCESS_TOKEN
                     : "JWT";
             case LOGOUT:

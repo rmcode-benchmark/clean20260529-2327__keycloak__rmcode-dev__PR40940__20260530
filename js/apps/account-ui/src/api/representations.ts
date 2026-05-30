@@ -31,7 +31,7 @@ export interface ConsentRepresentation {
 export interface ConsentScopeRepresentation {
   id: string;
   name: string;
-  displayText: string;
+  displayTest: string;
 }
 
 export interface CredentialMetadataRepresentationMessage {

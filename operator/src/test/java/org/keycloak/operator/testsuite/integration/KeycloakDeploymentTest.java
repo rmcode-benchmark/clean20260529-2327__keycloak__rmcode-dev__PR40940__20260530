@@ -47,6 +47,7 @@ import org.keycloak.operator.crds.v2alpha1.deployment.KeycloakStatusCondition;
 import org.keycloak.operator.crds.v2alpha1.deployment.ValueOrSecret;
 import org.keycloak.operator.crds.v2alpha1.deployment.spec.BootstrapAdminSpec;
 import org.keycloak.operator.crds.v2alpha1.deployment.spec.HostnameSpecBuilder;
+import org.keycloak.operator.crds.v2alpha1.deployment.spec.ProbeSpec;
 import org.keycloak.operator.testsuite.apiserver.DisabledIfApiServerTest;
 import org.keycloak.operator.testsuite.unit.WatchedResourcesTest;
 import org.keycloak.operator.testsuite.utils.CRAssert;
@@ -212,7 +213,6 @@ public class KeycloakDeploymentTest extends BaseOperatorTest {
     @Test
     public void testDeploymentDurability() {
         var kc = getTestKeycloakDeployment(true);
-        KeycloakDeploymentTest.initCustomBootstrapAdminUser(kc);
         var deploymentName = kc.getMetadata().getName();
 
         // create a dummy StatefulSet representing the pre-multiinstance state that we'll be forced to delete
@@ -395,19 +395,14 @@ public class KeycloakDeploymentTest extends BaseOperatorTest {
     @Test
     public void testCustomBootstrapAdminUser() {
         var kc = getTestKeycloakDeployment(true);
-        String secretName = initCustomBootstrapAdminUser(kc);
-        assertInitialAdminUser(secretName, kc, true);
-    }
-
-    static String initCustomBootstrapAdminUser(Keycloak kc) {
         String secretName = "my-secret";
         // fluents don't seem to work here because of the inner classes
         kc.getSpec().setBootstrapAdminSpec(new BootstrapAdminSpec());
         kc.getSpec().getBootstrapAdminSpec().setUser(new BootstrapAdminSpec.User());
         kc.getSpec().getBootstrapAdminSpec().getUser().setSecret(secretName);
         k8sclient.resource(new SecretBuilder().withNewMetadata().withName(secretName).endMetadata()
-                .addToStringData("username", "user").addToStringData("password", "pass20rd").build()).serverSideApply();
-        return secretName;
+                .addToStringData("username", "user").addToStringData("password", "pass20rd").build()).create();
+        assertInitialAdminUser(secretName, kc, true);
     }
 
     // Reference curl command:

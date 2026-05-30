@@ -52,7 +52,6 @@ export async function assertAuthorizationUrl(page: Page) {
 type UrlType =
   | "authorization"
   | "token"
-  | "tokenIntrospection"
   | "singleSignOnService"
   | "singleLogoutService";
 

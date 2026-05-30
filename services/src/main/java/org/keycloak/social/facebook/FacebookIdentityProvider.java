@@ -19,7 +19,6 @@ package org.keycloak.social.facebook;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.OAuthErrorException;
@@ -71,8 +70,8 @@ public class FacebookIdentityProvider extends AbstractOAuth2IdentityProvider<Fac
 
     private void verifyToken(String accessToken) throws IOException {
         JsonNode response = SimpleHttp.doGet(DEBUG_TOKEN_URL, session)
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + getConfig().getClientId() + "|" + getConfig().getClientSecret())
                 .param("input_token", accessToken)
+                .param(OAuth2Constants.ACCESS_TOKEN, getConfig().getClientId() + "|" + getConfig().getClientSecret())
                 .asJson();
 
         JsonNode errorNode = response.get("error");
